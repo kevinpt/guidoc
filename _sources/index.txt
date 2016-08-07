@@ -1,0 +1,124 @@
+.. Guidoc documentation master file, created by
+   sphinx-quickstart on Sun Aug  7 16:13:07 2016.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+
+======
+Guidoc
+======
+
+Guidoc is a python package that allows you to create Tkinter widget layouts using a simple docstring specification. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with indentation used to establish relationships between parent and child widgets. This is also used to compactly describe menus.
+
+When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.
+
+.. code-block:: python
+
+  from guidoc import tk_layout
+  
+  @tk_layout('''
+  btnA(Button | text='Button A')
+  btnB(Button | text='Button B')
+  btnC(Button | text='Button C (spanning two columns)')
+  btnD(Button | text='Button D')
+  
+  [grid]
+
+  +-----+------+------+
+  |btnA | btnB |      |
+  +-----+------+ btnD |
+  |    btnC    |      |
+  +------------+------+
+  ''')
+  class MyApp(Frame):
+    def __init__(self, parent):
+      Frame.__init__(self, parent)
+      self._build_widgets()
+  
+The ``guidoc.py`` file functions as a standalone module and can be directly copied into your projects. It also functions as a command line tool for static code generation.
+
+With no command line arguments the guidoc.py module will launch a demo app:
+
+.. code-block:: sh
+
+  > guidoc
+
+
+Requirements
+------------
+
+Guidoc requires either Python 2.7 or Python 3.x and no additional libraries.
+It is recommended that you install the `docutils <http://docutils.sourceforge.net/>`_ package needed to parse
+tabular grid layouts.
+
+The installation script depends on setuptools which will be installed if it
+isn't currently present in your Python distribution. The source is written in
+Python 2.7 syntax but will convert cleanly to Python 3 when the installer
+passes it through 2to3.
+
+
+Download
+--------
+
+You can access the Guidoc Git repository from `Github
+<https://github.com/kevinpt/guidoc>`_. You can install direct from PyPI with the "pip"
+command if you have it available.
+
+
+Installation
+------------
+
+Guidoc is a Python package. You must have Python installed first to use it. Most modern Linux distributions and OS/X have it available by default. There are a number of options available for Windows. If you don't already have a favorite, I recommend getting one of the `"full-stack" Python distros <http://www.scipy.org/install.html>`_ that are geared toward scientific computing such as Anaconda or Python(x,y).
+
+If your OS has a package manager, it may be preferable to install Python setuptools through that tool before attempting to install Guidoc. Otherwise, the installation script will install these packages directly without registering them with the OS package manager.
+
+The easiest way to install Guidoc is from `PyPI <https://pypi.python.org/pypi/guidoc>`_.
+
+.. code-block:: sh
+
+  > pip install --upgrade guidoc
+
+This will download and install the latest release, upgrading if you already have it installed. If you don't have ``pip`` you may have the ``easy_install`` command available which can be used to install ``pip`` on your system:
+
+.. code-block:: sh
+
+  > easy_install pip
+  
+You can also use ``pip`` to get the latest development code from Github:
+
+.. code-block:: sh
+
+  > pip install --upgrade https://github.com/kevinpt/guidoc/tarball/master
+
+If you manually downloaded a source package or created a clone with Git you can install Guidoc with the following command run from the base Guidoc directory:
+
+.. code-block:: sh
+
+  > python setup.py install
+
+On Linux systems you may need to install with root privileges using the *sudo* command.
+
+After a successful install the Guidoc package and script will be available. On Linux they should be immediately accessible from your current search path. On Windows you will need to make sure that the ``<Python root>\Scripts`` directory is in your %PATH% environment variable.
+
+If you can't use the installer script, it is possible to use ``guidoc.py`` directly without installation and just distribute it along with your code. If you need to use this module from Python 3 you can manually convert it with the ``2to3`` tool:
+
+.. code-block:: sh
+
+  > 2to3 -w guidoc.py
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+Licensing
+---------
+
+Guidoc is licensed for free commercial and non-commercial use under the terms of the MIT license.
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`search`
+
