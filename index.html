@@ -73,16 +73,20 @@
 <span class="n">root</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>What happens here is the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> decorator parses the Guidoc specification string and inserts the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method into the <tt class="docutils literal"><span class="pre">MyApp</span></tt> class.</p>
+<p>This gives rise to the following mockup:</p>
+<img alt="_images/splash.png" src="_images/splash.png" />
+<p>What happens here is the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> decorator parses the Guidoc specification string and inserts the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method into the <tt class="docutils literal"><span class="pre">MyApp</span></tt> class. Calling the method in the initialization code adds all of the widget and menu items declared in the specification.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The examples in this documentation use Python 2.7 syntax. The &#8220;Tkinter&#8221; library was renamed to &#8220;tkinter&#8221; in Python 3.x.</p>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">guidoc.py</span></tt> file functions as a standalone module and can be directly copied into your projects. It also functions as a command line tool for static code generation.</p>
-<p>With no command line arguments the guidoc.py module will launch a demo app:</p>
+<p>With no command line arguments the <tt class="docutils literal"><span class="pre">guidoc.py</span></tt> module will launch a demo app:</p>
 <div class="highlight-sh"><div class="highlight"><pre>&gt; guidoc
 </pre></div>
 </div>
+<img alt="_images/demo.png" src="_images/demo.png" />
+<p>You should be somewhat familiar with Tkinter. Guidoc simplifies some of the labor involved in creating a Tkinter application but you need to know how to write the code that connects the widgets together and makes them useful. This documentation will not teach you how to use Tkinter.</p>
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>Guidoc requires either Python 2.7 or Python 3.x and no additional libraries.
@@ -128,26 +132,29 @@ command if you have it available.</p>
 <div class="section" id="guidoc-specification-syntax">
 <h2>Guidoc specification syntax<a class="headerlink" href="#guidoc-specification-syntax" title="Permalink to this headline">¶</a></h2>
 <p>The heart of using Guidoc is the layout specification. It is a string or separate file containing a description of the Tkinter GUI elements that will be generated.</p>
-<p>A specification composed of a sequence of sections. Each section begins with a line in square brackets containing the section name and an optional parameter. Section names are case insensitive.</p>
-<div class="highlight-python"><div class="highlight"><pre>&quot;[&quot; {widgets|grid|menu} {optional parameter} &quot;]&quot;
-</pre></div>
+<p>A specification is composed of a sequence of sections. Each section begins with a line in square brackets containing the section type and an optional parameter. Section type names are case insensitive.</p>
+<div class="figure align-center">
+<img alt="_images/guidoc_section.spec.png" src="_images/guidoc_section.spec.png" />
+<p class="caption">Widget section heading syntax</p>
 </div>
-<p>Sections can be in any order. There can be only one widgets section. Any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the section name and begin the widget definitions immediately.</p>
+<p>Sections can be in any order. There can be only one widgets section but any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the &#8220;[widgets]&#8221; section heading and begin the widget definitions immediately.</p>
 <p>You can have comments anywhere within the specification. They are started by a &#8220;#&#8221; character and extend to the end of the line.</p>
 <div class="section" id="widgets-section">
 <h3>Widgets section<a class="headerlink" href="#widgets-section" title="Permalink to this headline">¶</a></h3>
 <p>All of the widgets to be created in the layout are listed in the widgets section, one widget per line. An indented widget is the child of the parent widget at the previous indentation level. Tabs are not recognized as indentation, only spaces. Blank lines are ignored. They don&#8217;t affect the hierarchy. A widget specification consists of the following:</p>
-<div class="highlight-python"><div class="highlight"><pre>{widget name} &quot;(&quot; {widget class} {&quot;|&quot; optional parameters} &quot;)&quot; {optional layout configuration}
-</pre></div>
+<div class="figure align-center">
+<img alt="_images/guidoc_widget.spec.png" src="_images/guidoc_widget.spec.png" />
+<p class="caption">Widget specification syntax</p>
 </div>
-<p>Every widget name becomes an instance attribute of the class that the layout will be inserted into. They must be a valid Python identifier. The class must be a visible Tkinter widget class or a custom class with a standard Tkinter <tt class="docutils literal"><span class="pre">config()</span></tt> method. The optional parameters are a list of Python arguments that would be valid for the widget constructor or its <tt class="docutils literal"><span class="pre">config()</span></tt> method.</p>
-<p>Complex arguments requiring more than one line can be reserved for manual calls to the widget <tt class="docutils literal"><span class="pre">config()</span></tt> method after the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> has initialized the widgets.</p>
-<p>A frame containing a label and a button:</p>
+<p>Every widget name becomes an instance attribute of the class that the layout will be inserted into. They must be a valid Python identifier. The class must be a visible Tkinter widget class or a custom class with a standard Tkinter <tt class="docutils literal"><span class="pre">config()</span></tt> method. The optional parameters are a list of Python keyword arguments that would be valid for the widget constructor or its <tt class="docutils literal"><span class="pre">config()</span></tt> method.</p>
+<p>All parameters must be a comma separated list in &#8220;&lt;key&gt;=&lt;value&gt;&#8221; format as positional parameters are not supported. Complex arguments requiring more than one line can be reserved for manual calls to the widget <tt class="docutils literal"><span class="pre">config()</span></tt> method after <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> has initialized the widgets.</p>
+<p>To illustrate, here is a frame containing a label and a button:</p>
 <div class="highlight-python"><div class="highlight"><pre>myFrame(Frame)
   myButton(Button | text=&#39;Button text&#39;)
   myLabel(Label | text=&#39;Label text&#39;)
 </pre></div>
 </div>
+<img alt="_images/basic_packed.png" src="_images/basic_packed.png" />
 <p>These widgets expand into the following code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Widgets</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">myFrame</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -160,32 +167,35 @@ command if you have it available.</p>
 </div>
 <p>See how every widget becomes an attribute of the class. You can refer to them later in your own code that needs to alter the widgets, setup event bindings, etc. The frame has been used as the parent of the button and label based on their indentation. In more complex layouts you can easily revise the widget hierarchy without having to update the parent widgets since Guidoc handles it for you.</p>
 <p>The Guidoc package will attempt to discover the name of the Tkinter library and prepend it onto any standard widgets. In this case it has been aliased to &#8220;tk&#8221;. You can override this with an optional parameter to the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> decorator.</p>
-<p>All widgets default to using the <tt class="docutils literal"><span class="pre">pack</span></tt> geometry manager. You can override the default by appending a geometry manager specification to the end of the widget definition. This lets you pass configuration paramaters or change to the <tt class="docutils literal"><span class="pre">grid</span></tt> or <tt class="docutils literal"><span class="pre">place</span></tt> managers if needed. The geometry manager specification has the following syntax:</p>
-<div class="highlight-python"><div class="highlight"><pre>&quot;&lt;&quot; {pack|grid|place} {&quot;|&quot; optional parameters} &quot;&gt;&quot;
-</pre></div>
+<p>All widgets default to using the <tt class="docutils literal"><span class="pre">pack</span></tt> geometry manager. You can override the default by appending a geometry manager configuration to the end of the widget definition. This lets you pass configuration parameters or change to the <tt class="docutils literal"><span class="pre">grid</span></tt> or <tt class="docutils literal"><span class="pre">place</span></tt> managers if needed. It has the following syntax:</p>
+<div class="figure align-center">
+<img alt="_images/guidoc_widget_geometry.spec.png" src="_images/guidoc_widget_geometry.spec.png" />
+<p class="caption">Geometry manager configuration syntax</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The parameters to a widget class are copied directly into the generated code without any attempt to parse them. The parameters to the layout manager, however, need to be parsed so that the grid sections can override row and column settings. This parsing is crude and you need to avoid any complex Python syntax that can&#8217;t be handled.</p>
+<p class="last">The parameters to a widget class are copied directly into the generated code without any attempt to parse them. The parameters to the geometry manager, however, need to be parsed so that the grid sections can override row and column settings. This parsing is crude and you need to avoid any complex Python syntax that can&#8217;t be handled.</p>
 </div>
 <div class="highlight-python"><div class="highlight"><pre># Pack widgets horizontally
 myFrame(Frame)
   myButton(Button | text=&#39;Button text&#39;) &lt;pack | side=&#39;left&#39;&gt;
-  myLabel(Label | text=&#39;Label text&#39;, bg=&#39;blue&#39;) &lt;pack | side=&#39;left&#39;&gt;
+  myLabel(Label | text=&#39;Label text&#39;, bg=&#39;red&#39;) &lt;pack | side=&#39;left&#39;&gt;
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre># Put widgets into a grid
+<img alt="_images/basic_pack_horiz.png" src="_images/basic_pack_horiz.png" />
+<div class="highlight-python"><div class="highlight"><pre># Manually put widgets into a grid
 myFrame(Frame)
-  myButton(Button | text=&#39;Button text&#39;) &lt;grid | row=0, col=0&gt;
-  myLabel(Label | text=&#39;Label text&#39;, bg=&#39;blue&#39;) &lt;grid | row=1, col=1&gt;
+  myButton(Button | text=&#39;Button text&#39;) &lt;grid | row=0, column=0&gt;
+  myLabel(Label | text=&#39;Label text&#39;, bg=&#39;red&#39;) &lt;grid | row=1, column=1&gt;
 </pre></div>
 </div>
+<img alt="_images/basic_grid.png" src="_images/basic_grid.png" />
 </div>
 <div class="section" id="grid-sections">
 <h3>Grid sections<a class="headerlink" href="#grid-sections" title="Permalink to this headline">¶</a></h3>
 <p>Grid sections serve as a supplement to the widgets defined in the widgets section. Each grid contains a table in one of the <a class="reference external" href="http://docutils.sourceforge.net/docs/user/rst/quickref.html#tables">two forms supported by the docutils package</a>. The grid table format permits cells to span multiple columns and rows. The simple table format only permits cells to span multiple columns.</p>
 <p>Each grid cell in the table contains a single widget name corresponding to the names defined in the widgets section. Any nested <tt class="docutils literal"><span class="pre">Frame</span></tt> widgets can have their own grid sections with a table describing how their children are arranged.</p>
-<div class="highlight-python"><div class="highlight"><pre>[grid frameA]
+<div class="highlight-python"><div class="highlight"><pre>[grid frameL]    # Grid table format:
 
 +------+------+
 | lblA |      |
@@ -193,7 +203,7 @@ myFrame(Frame)
 | lblB |      |
 +------+------+
 
-[grid frameB]
+[grid frameR]    # Simple table format:
 
 # lblZ spans two columns
 ==== ====
@@ -203,25 +213,20 @@ lblX lblY
 ==== ====
 </pre></div>
 </div>
+<img alt="_images/gridded.png" src="_images/gridded.png" />
 <p>The section parameter for the grid identifies which widget the grid applies to. This must be the name of a container widget that can serve as the parent to child widgets. These are <tt class="docutils literal"><span class="pre">Frame</span></tt> and <tt class="docutils literal"><span class="pre">Toplevel</span></tt> in the built in Tkinter classes. One grid section can have its parameter omitted in which case it applies to the top level widgets for the new class being defined in your code.</p>
-<p>After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in column one.</p>
+<p>After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in additional rows under column one.</p>
 <p>Sibling widgets that have been explicitly set to use the <tt class="docutils literal"><span class="pre">pack</span></tt> or <tt class="docutils literal"><span class="pre">place</span></tt> geometry managers will conflict with the use of the <tt class="docutils literal"><span class="pre">grid</span></tt> geometry manager. This will cause an exception and terminate parsing of the specification.</p>
 </div>
 <div class="section" id="menu-sections">
 <h3>Menu sections<a class="headerlink" href="#menu-sections" title="Permalink to this headline">¶</a></h3>
 <p>Menus can be described in a hierarchical fashion similar to widgets. Each menu section describes a single menu tree. A row in the menu specification describes a single menu item with the following syntax:</p>
-<div class="highlight-python"><div class="highlight"><pre>Command, check button, and radio button menus:
-
-  {&quot;[]&quot; | &quot;*&quot;} {menu text} {optional parameters}
-
-
-Separators:
-
-  ----
-</pre></div>
+<div class="figure align-center">
+<img alt="_images/guidoc_menu.spec.png" src="_images/guidoc_menu.spec.png" />
+<p class="caption">Menu item syntax</p>
 </div>
 <p>The menu text must be quoted if it contains spaces. You can prefix a character with &#8220;&amp;&#8221; in the text to mark it as a keyboard accelerator. Check button menu items are preceded by &#8220;[]&#8221; and radio button items by &#8220;*&#8221;.</p>
-<p>The parameter to the menu section serves as the attribute the menu will ba assigned to. One menu section can have its parameter omitted, in which case it will be called &#8220;menubar&#8221;. An attempt will be made to automatically configure this menu as the application menu bar if the class or its parent is an instance of <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. All other menus must be manually configured to become visible.</p>
+<p>The menu section parameter serves as the class attribute the menu will be assigned to. One menu section can have its parameter omitted, in which case it will be called &#8220;menubar&#8221;. An attempt will be made to automatically configure this menu as the application menu bar if the class or its parent is an instance of <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. All other menus must be manually configured to become visible.</p>
 <p>Separator lines can be created with four or more &#8220;-&#8221; characters in sequence.</p>
 <p>For check and radio button items you will want to use the appropriate Tkinter variable objects to store their state. Radio items sharing the same variable are linked together. Menu rows that are the parent to a set of child items should have no parameters.</p>
 <div class="highlight-python"><div class="highlight"><pre>[menu]
@@ -249,11 +254,46 @@ self.RadioVal = tk.StringVar()
 self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 </pre></div>
 </div>
-<p>Each cascade menu has its tearoff property disabled by default for a more up to date rendering. They can be re-enabled if desired.</p>
+<img alt="_images/menu.png" src="_images/menu.png" />
+<p>With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled by default for a more up to date rendering style.</p>
+<p>Internally the Tk library uses numeric indices to refer to menu entries. To help track these indices a <tt class="docutils literal"><span class="pre">dict</span></tt> called &#8220;indices&#8221; is inserted into the top level menu widget whose keys are the text of the menu entry.</p>
 </div>
 </div>
 <div class="section" id="using-the-decorator">
 <h2>Using the decorator<a class="headerlink" href="#using-the-decorator" title="Permalink to this headline">¶</a></h2>
+<p>You use the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> class decorator to dynamically generate the layout method. It is called with the following parameters:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>layout</dt>
+<dd>The layout specification. This is the only required parameter. It can be provided in place as a docstring. Use a raw docstring if you need to embed escaped characters.</dd>
+<dt>lib_prefix</dt>
+<dd>The Python library prefix to prepend on widget constructors</dd>
+<dt>method_name</dt>
+<dd>The name of the method to generate. This defaults to &#8220;_build_widgets&#8221;</dd>
+<dt>require_docutils</dt>
+<dd>Raise an exception when docutils is not present. This defaults to False.</dd>
+</dl>
+</div></blockquote>
+<p>The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as <tt class="docutils literal"><span class="pre">Frame</span></tt> or <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.</p>
+<p>The original layout is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class.</p>
+<p>Your <tt class="docutils literal"><span class="pre">__init__</span></tt> method should instantiate any Tkinter variables needed by the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method. After calling the method you can continue to configure the widgets with event bindings and other activities.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@tk_layout</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span>
+<span class="s"># Your layout specification goes here</span>
+<span class="s">&#39;&#39;&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">MyFialog</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+    <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+    <span class="c"># Create any necessary Tkinter variables here</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_build_widgets</span><span class="p">()</span>
+
+    <span class="c"># Finish configuring the widgets and menus here</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="static-generation">
+<h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="error-handling">
 <h2>Error handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
@@ -297,10 +337,6 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 
 
 <div id="download_links">
-  <div class="dl-button">
-  <a href="https://goo.gl/tz2vwz"><b>Download</b></a><br>
-  </div>
-
   <div class="js-clone-url clone-url open" data-protocol-type="http">
     <span>Git clone URL:</span>
     <div>
@@ -329,6 +365,7 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 </ul>
 </li>
 <li><a class="reference internal" href="#using-the-decorator">Using the decorator</a></li>
+<li><a class="reference internal" href="#static-generation">Static generation</a></li>
 <li><a class="reference internal" href="#error-handling">Error handling</a></li>
 <li><a class="reference internal" href="#debugging">Debugging</a></li>
 <li><a class="reference internal" href="#licensing">Licensing</a></li>

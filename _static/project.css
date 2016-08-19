@@ -115,3 +115,9 @@ div.dl-button a:hover {
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#008c00', endColorstr='#007200',GradientType=0 ); /* IE6-9 */
 
 }
+
+p.caption {
+     font-family: "Kreon", "goudy old style", "minion pro", "bell mt", Georgia, "Hiragino Mincho Pro", serif;
+  font-size: medium; 
+  font-weight: bold;
+}

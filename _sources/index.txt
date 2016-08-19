@@ -43,9 +43,13 @@ Guidoc saves you from the challenge of writing and managing complex Tkinter layo
 
   root = tk.Tk()
   app = MyApp(root)
-  root.mainloop() 
+  root.mainloop()
+
+This gives rise to the following mockup:
+
+.. image:: images/scripts/splash.png
   
-What happens here is the ``tk_layout`` decorator parses the Guidoc specification string and inserts the ``_build_widgets()`` method into the ``MyApp`` class.
+What happens here is the ``tk_layout`` decorator parses the Guidoc specification string and inserts the ``_build_widgets()`` method into the ``MyApp`` class. Calling the method in the initialization code adds all of the widget and menu items declared in the specification.
 
 .. note::
 
@@ -54,11 +58,16 @@ What happens here is the ``tk_layout`` decorator parses the Guidoc specification
   
 The ``guidoc.py`` file functions as a standalone module and can be directly copied into your projects. It also functions as a command line tool for static code generation.
 
-With no command line arguments the guidoc.py module will launch a demo app:
+With no command line arguments the ``guidoc.py`` module will launch a demo app:
 
 .. code-block:: sh
 
   > guidoc
+
+.. image:: images/scripts/demo.png
+
+
+You should be somewhat familiar with Tkinter. Guidoc simplifies some of the labor involved in creating a Tkinter application but you need to know how to write the code that connects the widgets together and makes them useful. This documentation will not teach you how to use Tkinter.
 
 
 Requirements
@@ -129,13 +138,15 @@ Guidoc specification syntax
 
 The heart of using Guidoc is the layout specification. It is a string or separate file containing a description of the Tkinter GUI elements that will be generated.
 
-A specification composed of a sequence of sections. Each section begins with a line in square brackets containing the section name and an optional parameter. Section names are case insensitive.
+A specification is composed of a sequence of sections. Each section begins with a line in square brackets containing the section type and an optional parameter. Section type names are case insensitive.
 
-.. parsed-literal::
 
-  "[" {widgets|grid|menu} {optional parameter} "]"
+.. figure:: images/guidoc_section.spec.png
+  :align: center
 
-Sections can be in any order. There can be only one widgets section. Any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the section name and begin the widget definitions immediately.
+  Widget section heading syntax
+  
+Sections can be in any order. There can be only one widgets section but any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the "[widgets]" section heading and begin the widget definitions immediately.
 
 You can have comments anywhere within the specification. They are started by a "#" character and extend to the end of the line.
 
@@ -145,22 +156,25 @@ Widgets section
 
 All of the widgets to be created in the layout are listed in the widgets section, one widget per line. An indented widget is the child of the parent widget at the previous indentation level. Tabs are not recognized as indentation, only spaces. Blank lines are ignored. They don't affect the hierarchy. A widget specification consists of the following:
 
-.. parsed-literal::
+.. figure:: images/guidoc_widget.spec.png
+  :align: center
 
-  {widget name} "(" {widget class} {"|" optional parameters} ")" {optional layout configuration}
-  
-Every widget name becomes an instance attribute of the class that the layout will be inserted into. They must be a valid Python identifier. The class must be a visible Tkinter widget class or a custom class with a standard Tkinter ``config()`` method. The optional parameters are a list of Python arguments that would be valid for the widget constructor or its ``config()`` method.
+  Widget specification syntax
 
-Complex arguments requiring more than one line can be reserved for manual calls to the widget ``config()`` method after the ``_build_widgets()`` has initialized the widgets.
+Every widget name becomes an instance attribute of the class that the layout will be inserted into. They must be a valid Python identifier. The class must be a visible Tkinter widget class or a custom class with a standard Tkinter ``config()`` method. The optional parameters are a list of Python keyword arguments that would be valid for the widget constructor or its ``config()`` method.
+
+All parameters must be a comma separated list in "<key>=<value>" format as positional parameters are not supported. Complex arguments requiring more than one line can be reserved for manual calls to the widget ``config()`` method after ``_build_widgets()`` has initialized the widgets.
 
 
-A frame containing a label and a button:
+To illustrate, here is a frame containing a label and a button:
 
 .. parsed-literal::
 
   myFrame(Frame)
     myButton(Button | text='Button text')
     myLabel(Label | text='Label text')
+    
+.. image:: images/scripts/basic_packed.png
     
 These widgets expand into the following code:
 
@@ -178,15 +192,16 @@ See how every widget becomes an attribute of the class. You can refer to them la
 
 The Guidoc package will attempt to discover the name of the Tkinter library and prepend it onto any standard widgets. In this case it has been aliased to "tk". You can override this with an optional parameter to the ``tk_layout`` decorator.
   
-All widgets default to using the ``pack`` geometry manager. You can override the default by appending a geometry manager specification to the end of the widget definition. This lets you pass configuration paramaters or change to the ``grid`` or ``place`` managers if needed. The geometry manager specification has the following syntax:
+All widgets default to using the ``pack`` geometry manager. You can override the default by appending a geometry manager configuration to the end of the widget definition. This lets you pass configuration parameters or change to the ``grid`` or ``place`` managers if needed. It has the following syntax:
 
-.. parsed-literal::
+.. figure:: images/guidoc_widget_geometry.spec.png
+  :align: center
 
- "<" {pack|grid|place} {"|" optional parameters} ">"
+  Geometry manager configuration syntax
 
 .. note::
  
-  The parameters to a widget class are copied directly into the generated code without any attempt to parse them. The parameters to the layout manager, however, need to be parsed so that the grid sections can override row and column settings. This parsing is crude and you need to avoid any complex Python syntax that can't be handled.
+  The parameters to a widget class are copied directly into the generated code without any attempt to parse them. The parameters to the geometry manager, however, need to be parsed so that the grid sections can override row and column settings. This parsing is crude and you need to avoid any complex Python syntax that can't be handled.
  
 
 .. parsed-literal::
@@ -194,15 +209,19 @@ All widgets default to using the ``pack`` geometry manager. You can override the
   # Pack widgets horizontally
   myFrame(Frame)
     myButton(Button | text='Button text') <pack | side='left'>
-    myLabel(Label | text='Label text', bg='blue') <pack | side='left'>
+    myLabel(Label | text='Label text', bg='red') <pack | side='left'>
+    
+.. image:: images/scripts/basic_pack_horiz.png
+    
 
 .. parsed-literal::
 
-  # Put widgets into a grid
+  # Manually put widgets into a grid
   myFrame(Frame)
-    myButton(Button | text='Button text') <grid | row=0, col=0>
-    myLabel(Label | text='Label text', bg='blue') <grid | row=1, col=1>
-  
+    myButton(Button | text='Button text') <grid | row=0, column=0>
+    myLabel(Label | text='Label text', bg='red') <grid | row=1, column=1>
+
+.. image:: images/scripts/basic_grid.png  
 
 Grid sections
 ~~~~~~~~~~~~~
@@ -213,7 +232,7 @@ Each grid cell in the table contains a single widget name corresponding to the n
 
 .. parsed-literal::
 
-  [grid frameA]
+  [grid frameL]    # Grid table format:
   
   +------+------+
   | lblA |      |
@@ -221,7 +240,7 @@ Each grid cell in the table contains a single widget name corresponding to the n
   | lblB |      |
   +------+------+
   
-  [grid frameB]
+  [grid frameR]    # Simple table format:
 
   # lblZ spans two columns
   ==== ====
@@ -230,10 +249,11 @@ Each grid cell in the table contains a single widget name corresponding to the n
   ---------
   ==== ====
 
+.. image:: images/scripts/gridded.png
 
 The section parameter for the grid identifies which widget the grid applies to. This must be the name of a container widget that can serve as the parent to child widgets. These are ``Frame`` and ``Toplevel`` in the built in Tkinter classes. One grid section can have its parameter omitted in which case it applies to the top level widgets for the new class being defined in your code.
 
-After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in column one.
+After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in additional rows under column one.
 
 Sibling widgets that have been explicitly set to use the ``pack`` or ``place`` geometry managers will conflict with the use of the ``grid`` geometry manager. This will cause an exception and terminate parsing of the specification.
 
@@ -243,20 +263,14 @@ Menu sections
 
 Menus can be described in a hierarchical fashion similar to widgets. Each menu section describes a single menu tree. A row in the menu specification describes a single menu item with the following syntax:
 
-.. parsed-literal::
+.. figure:: images/guidoc_menu.spec.png
+  :align: center
 
-  Command, check button, and radio button menus:
-  
-    {"[]" | "*"} {menu text} {optional parameters}
+  Menu item syntax
 
-
-  Separators:
-  
-    ----
-  
 The menu text must be quoted if it contains spaces. You can prefix a character with "&" in the text to mark it as a keyboard accelerator. Check button menu items are preceded by "[]" and radio button items by "*".
 
-The parameter to the menu section serves as the attribute the menu will ba assigned to. One menu section can have its parameter omitted, in which case it will be called "menubar". An attempt will be made to automatically configure this menu as the application menu bar if the class or its parent is an instance of ``Toplevel``. All other menus must be manually configured to become visible.
+The menu section parameter serves as the class attribute the menu will be assigned to. One menu section can have its parameter omitted, in which case it will be called "menubar". An attempt will be made to automatically configure this menu as the application menu bar if the class or its parent is an instance of ``Toplevel``. All other menus must be manually configured to become visible.
 
 Separator lines can be created with four or more "-" characters in sequence.
 
@@ -288,11 +302,55 @@ For check and radio button items you will want to use the appropriate Tkinter va
   self.RadioVal = tk.StringVar()
   self.RadioVal.set('1')  # Initialize the value
 
-Each cascade menu has its tearoff property disabled by default for a more up to date rendering. They can be re-enabled if desired.
+.. image:: images/scripts/menu.png
+
+With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled by default for a more up to date rendering style.
+
+Internally the Tk library uses numeric indices to refer to menu entries. To help track these indices a ``dict`` called "indices" is inserted into the top level menu widget whose keys are the text of the menu entry.
 
 Using the decorator
 -------------------
 
+You use the ``tk_layout`` class decorator to dynamically generate the layout method. It is called with the following parameters:
+
+  layout
+    The layout specification. This is the only required parameter. It can be provided in place as a docstring. Use a raw docstring if you need to embed escaped characters.
+   
+  lib_prefix
+    The Python library prefix to prepend on widget constructors
+    
+  method_name
+    The name of the method to generate. This defaults to "_build_widgets"
+    
+  require_docutils
+    Raise an exception when docutils is not present. This defaults to False.
+
+The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as ``Frame`` or ``Toplevel``. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.
+
+The original layout is accessible through the ``_guidoc`` attribute of the class.
+
+Your ``__init__`` method should instantiate any Tkinter variables needed by the ``_build_widgets()`` method. After calling the method you can continue to configure the widgets with event bindings and other activities.
+
+.. code-block:: python
+
+  @tk_layout('''
+  # Your layout specification goes here
+  ''')
+  class MyFialog(tk.Frame):
+    def __init__(self, parent):
+      tk.Frame.__init__(self, parent)
+
+      # Create any necessary Tkinter variables here
+
+      self._build_widgets()
+      
+      # Finish configuring the widgets and menus here
+
+Static generation
+-----------------
+
+
+    
 Error handling
 --------------
 
