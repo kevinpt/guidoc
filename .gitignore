@@ -1,6 +1,8 @@
 __pycache__/
 build/
+_build/
 dist/
+guidoc.egg-info/
 
 *.pyc
 *.egg

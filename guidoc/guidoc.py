@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright © 2015 Kevin Thibedeau
+# Copyright © 2016 Kevin Thibedeau
 # (kevin 'period' thibedeau 'at' gmail 'punto' com)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,13 +30,12 @@ and maintaining Tkinter code.
 
 from __future__ import print_function
 
-import Tkinter
-from Tkinter import *
-import tkMessageBox
+import Tkinter as tk
+
 import re
-import inspect
 import sys
 import string
+from datetime import datetime
 
 try:
   import docutils.core
@@ -45,7 +44,7 @@ except ImportError:
   have_docutils = False
 
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 class LayoutError(Exception):
   '''Base exception for guisdoc'''
@@ -100,26 +99,36 @@ def parse_indented_list(lines, parse_func, class_name=None):
     n = parse_func(ls.rstrip(), class_name)
     if cur_indent is None or next_indent == cur_indent:
       cur_level.append(n)
-      #print('## add sibling: ', l, cur_indent, next_indent, cur_level)
       cur_indent = next_indent
     elif next_indent > cur_indent:
-      #print('## add child', next_indent, cur_indent)
       cur_indent = next_indent
       stack.append((cur_indent, cur_level[-1].children))
       cur_level = stack[-1][1]
       cur_level.append(n)
     else:
       while next_indent < cur_indent and len(stack) > 1:
-        #print('## add parent: ', l, next_indent, cur_indent)
         del stack[-1]
         cur_indent, cur_level = stack[-1]
         if cur_indent is None:
           cur_indent = next_indent
-      #print('### cur_level1:', len(cur_level), cur_level, cur_indent)
       cur_level.append(n)
-      #print('### cur_level2:', len(cur_level), cur_level)
       
   return nodes
+
+def find_tkinter_name():
+  '''Discover the name the Tkinter module has been imported under
+  Returns:
+    str: The name of the Tkinter library or None
+  '''
+  import types
+
+  # Get all global modules pointing to the Tkinter or tkinter package
+  m = [k for k,v in globals().iteritems() if type(v) == types.ModuleType and v.__name__ in ('Tkinter', 'tkinter')]
+
+  if len(m) > 0:
+    return m[0]
+  else:
+    return None
 
 
 def compile_method(code, method_name):
@@ -132,8 +141,6 @@ def compile_method(code, method_name):
   Returns:
     code object: The compiled code object for the method or None
   '''
-  #print('CODE:', code)
-  #Compile method code into a code object
   glbls = globals().copy()
   exec(code, glbls)
   
@@ -166,28 +173,6 @@ def parse_params(params, class_name=None):
 
   return d
   
-#  # Attempt to create a code object with the parameter list
-#  try:
-#    co = compile('def widgetParamParse({}):pass'.format(params), '<string>', 'exec')
-#  except:
-#    return {}
-
-#  # Create the dummy function
-#  global_syms = {}
-#  exec(co, global_syms)
-#  
-#  # Extract the parsed parameters
-#  if 'widgetParamParse' in global_syms:
-#    args, varargs, keywords, defaults = inspect.getargspec(global_syms['widgetParamParse'])
-
-#    # Pad initial args with no defaults
-#    defaults = ([default_val] * (len(args) - len(defaults))) + list(defaults)
-#  
-#    return dict(zip(args, defaults))
-#  else:
-#    return {}
-
-
 def index_widgets(widgets, index):
   '''Build an index associating WidgetSpec objects by their name
   Args:
@@ -209,11 +194,6 @@ def index_containers(widgets, index, parent=None):
   for w in widgets:
     if len(w.children) > 0:
       index_containers(w.children, index, w)
-#  index.append((parent, widgets))
-#  for w in widgets:
-#    if len(w.children) > 0:
-#      index_containers(w.children, index, w)
-
 
 
 class Section(object):
@@ -332,17 +312,14 @@ class WidgetSection(Section):
     widget_layout_params = None
     
     # Strip off any layout mgr. params
-    #print('# [{}]'.format(repr(line)))
     m = layout_re.search(line)
     if m:
       widget_layout_mgr = m.group(1)
       widget_layout_params = m.group(2)
       line = line[:m.start()].rstrip() # Remove layout spec from widget line
-      #print('##### LAYOUT:', m.groups())
 
     m = widget_re.match(line)
     if m:
-      #print('WRE:', m.groups())
       widget_name = m.group(1)
       widget_kind = m.group(2)
       widget_params = m.group(3)
@@ -451,7 +428,6 @@ class GridSection(Section):
     
     # Use docutils to parse a table in one of two supported formats
     dom = docutils.core.publish_doctree('\n'.join(self.lines)).asdom()
-    #print(dom.toxml())
     
     # Get the number of columns
     num_cols = 1
@@ -467,11 +443,8 @@ class GridSection(Section):
       
       num_rows = len(rows)
       
-      #print('## rows: {}, cols: {}'.format(num_rows, num_cols))
-      
       # Create map of occupied cells
       cell_map = [[False]*num_cols for _ in xrange(num_rows)]
-      #print('## cells', cell_map)
       
       # Each row has a series of <entry> elements that should contain a single <paragraph> element
       for j, r in enumerate(rows):
@@ -516,9 +489,6 @@ class GridSection(Section):
               for m in xrange(cell_col, cell_col + cell_width):
                 cell_map[n][m] = True
 
-      #print('## cells', cell_map)
-    #print(table[0].toxml())
-
 
 #########################
 ######## MENUS ##########
@@ -553,11 +523,8 @@ class MenuSpec(object):
       
   @property
   def prop_label(self):
-    '''Convert whitespace to underscores to make label a valid identifier'''
-    if sys.version_info < (3,0):
-      return self.label.translate(string.maketrans(' \t\r\n&', '_____'))
-    else: # Py3.x
-      return self.label.translate({ord(f): t for f,t in zip(' \t\r\n&', '_____') })
+    '''Convert label to valid Python identifier '''
+    return re.sub(r'[\W]|^(?=\d)', '_', self.label)
 
     
   def __repr__(self):
@@ -590,7 +557,7 @@ class MenuSpec(object):
 
 
 # Match a menu spec line
-menu_re = re.compile('^(\\*|\\[\\])?\\s*([\\w\\d&]+|"[\\w\\d&\\s]+"|\'[\\w\\d&\\s]+\')\\s*(.*)')
+menu_re = re.compile('^(\\*|\\[\\])?\\s*([^\\s\'"]+|"[^"]+"|\'[^\']+\')\\s*(.*)')
 menu_sep_re = re.compile(r'^----')
 
 class MenuSection(Section):
@@ -689,16 +656,26 @@ class MenuSection(Section):
     for l in MenuSection.generate_menu_code(self.items, menu_name, menu_name, lib_prefix):
       yield l
 
+    # Build menu entry indices
+    indices = {}
+    for i, item in enumerate(self.items):
+      indices[item.label] = (i,)
+    yield 'self.{}.indices = '.format(menu_name) + repr(indices)
+
     # Automatically configure menu if it has the default name
     # Any other menu must be manually installed
     if menu_name == default_menu:      
       menu_attach = '''if isinstance(self, {}Toplevel):
   self.config(menu=self.{})
-elif isinstance(self.parent, {}Tk) or isinstance(self.parent, {}Toplevel):
-  self.parent.config(menu=self.{})'''.format(lib_prefix, menu_name, lib_prefix, lib_prefix, menu_name)
+elif isinstance(self.master, {}Tk) or isinstance(self.master, {}Toplevel):
+  self.master.config(menu=self.{})'''.format(lib_prefix, menu_name, lib_prefix, lib_prefix, menu_name)
       for l in menu_attach.splitlines():
         yield l
 
+
+
+#########################
+######### MISC ##########
 
 
 # Match end of line comments
@@ -733,7 +710,6 @@ def parse_layout_spec(spec, class_name=None, require_docutils=False):
     if m:
       # Get section names
       names = [n.strip() for n in m.group(1).split()]
-      #print('# Section:', names)
       if len(names) > 0:
         sect_name = names[0].lower()
         sect_param = None
@@ -809,7 +785,6 @@ def apply_grid_attributes(grids, widget_sec, class_name=None):
   # Associate grids with their container widget
   gindex = {}
   for g in grids:
-    #print('### GRID:', g.grid_data['_container'])
     if g.grid_data['_container'] in index:
       gindex[g.grid_data['_container']] = (index[g.grid_data['_container']].children, g.grid_data)
     elif g.grid_data['_container'] is None: # Top level grid
@@ -819,7 +794,6 @@ def apply_grid_attributes(grids, widget_sec, class_name=None):
   for w, g in gindex.itervalues():
     for c in w:
       if c.layout_mgr is None:
-        #print('## NO Manager:', c.name, c.layout_mgr)
         c.layout_mgr = 'grid'
 
   # Apply grid parameters from tables
@@ -829,7 +803,6 @@ def apply_grid_attributes(grids, widget_sec, class_name=None):
         grid_params = g[c.name]
         if c.layout_mgr == 'grid':
           c.layout_params.update(grid_params)
-          #print('## UPDATE:', c.layout_params, grid_params)
   
   # Set default grid coordinates for remaining widgets
   for w, g in gindex.itervalues():
@@ -864,11 +837,7 @@ def create_layout_method(layout, method_name, parent='self', lib_prefix=None, cl
 
   # Attempt to auto-discover the library prefix
   if lib_prefix is None:
-    if 'Tkinter' in sys.modules:
-      lib_prefix = 'Tkinter'
-    elif 'tkinter' in sys.modules:
-      lib_prefix = 'tkinter'
-
+    lib_prefix = find_tkinter_name()
 
   sections = parse_layout_spec(layout, class_name, require_docutils)
   
@@ -921,7 +890,9 @@ def create_layout_method(layout, method_name, parent='self', lib_prefix=None, cl
       method_body.extend(list(m.code(parent, lib_prefix)))
 
   # Build the complete method source code
-  method = 'def {}(self):\n{}'.format(method_name, '\n'.join(indent(method_body, 2)))
+  method = '''def {}(self):
+  """Tk layout generated by guidoc on {}"""
+{}'''.format(method_name, datetime.now(),'\n'.join(indent(method_body, 2)))
 
   #print(method)
   return method
@@ -940,6 +911,7 @@ def tk_layout(layout, lib_prefix=None, method_name='_build_widgets', require_doc
     co = compile_method(code, method_name)
     if co:
       setattr(cls, method_name, co) # Add method to the class
+      setattr(cls, '_guidoc', layout) # Save the original layout
 
     return cls
     
@@ -992,28 +964,26 @@ lblStatus(Label | padx=5, pady=5, relief='sunken') <grid | padx=3, pady=3, stick
   foo
   bar
 ''')
-class GuidocDemoApp(Frame):
+class GuidocDemoApp(tk.Frame):
   def __init__(self, parent):
-    Frame.__init__(self, parent)
+    tk.Frame.__init__(self, parent)
     
-    self.parent = parent
-    
-    self.parent.title('Guidoc demo')
-    self.pack(fill=BOTH, expand=1)
+    parent.title('Guidoc demo')
+    self.pack(fill='both', expand=1)
     
     # Any Tk variables referenced in _build_widgets() should be created first
-    self.chkAVal = IntVar()
-    self.chkBVal = IntVar()
-    self.radioVal = StringVar()
+    self.chkAVal = tk.IntVar()
+    self.chkBVal = tk.IntVar()
+    self.radioVal = tk.StringVar()
     self.radioVal.set('foo')
     
-    self.propXVal = BooleanVar()
+    self.propXVal = tk.BooleanVar()
     self.propXVal.set(True)
-    self.propYVal = BooleanVar()
+    self.propYVal = tk.BooleanVar()
     self.propYVal.set(True)
-    self.propZVal = BooleanVar()
+    self.propZVal = tk.BooleanVar()
     self.propZVal.set(True)
-    self.propRadioVal = StringVar()
+    self.propRadioVal = tk.StringVar()
     self.propRadioVal.set('b')
 
     # Call our generated layout method
@@ -1029,19 +999,28 @@ class GuidocDemoApp(Frame):
     # Monitor changes to radio group
     self.radioVal.trace('w', lambda *args: self.lblStatus.config(text = 'Radio choice is {}'.format(self.radioVal.get())))
 
+
+    print('## Indices:', self.menubar.indices)
+
     
   def show_about(self):
-    tkMessageBox.showinfo('About', 'This is a guidoc demonstration app')
-    
+    msgbox.showinfo('About', 'This is a guidoc demonstration app')
 
 
-if __name__ == '__main__':
+def guidoc_demo():
+  import tkMessageBox as msgbox
+  global msgbox
+
+  print('Starting guidoc demonstration...')
+  root = tk.Tk()
+  app = GuidocDemoApp(root)
+  root.mainloop()
+
+
+def main():
   if len(sys.argv) <= 1:
     # Show demo
-    print('Starting guidoc demonstration...')
-    root = Tk()
-    app = GuidocDemoApp(root)
-    root.mainloop()
+    guidoc_demo()
 
   else: # Act as command line code generator
     # Parse command line args
@@ -1092,4 +1071,7 @@ Static layout:
     # Create method
     code = create_layout_method(layout, args.method_name, 'self', args.lib_prefix, class_name, args.require_docutils)
     print(code)
+
+if __name__ == '__main__':
+  main()
 

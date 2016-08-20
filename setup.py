@@ -3,12 +3,12 @@ ez_setup.use_setuptools()
 
 from setuptools import setup
 
-# use README.rst for the long description
+# Use README.rst for the long description
 with open('README.rst') as fh:
     long_description = fh.read()
     
-# scan the script for the version string
-version_file = 'guidoc.py'
+# Scan the script for the version string
+version_file = 'guidoc/guidoc.py'
 version = None
 with open(version_file) as fh:
     try:
