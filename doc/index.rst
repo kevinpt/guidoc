@@ -82,6 +82,11 @@ isn't currently present in your Python distribution. The source is written in
 Python 2.7 syntax but will convert cleanly to Python 3 when the installer
 passes it through 2to3.
 
+Licensing
+---------
+
+Guidoc is licensed for free commercial and non-commercial use under the terms of the MIT license.
+
 
 Download
 --------
@@ -385,11 +390,6 @@ Guidoc code is only executed once at application startup for each decorated clas
 .. toctree::
    :maxdepth: 1
    :hidden:
-
-Licensing
----------
-
-Guidoc is licensed for free commercial and non-commercial use under the terms of the MIT license.
 
 Indices and tables
 ------------------

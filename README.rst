@@ -1,3 +1,5 @@
+.. image:: http://kevinpt.github.io/guidoc/_images/guidoc_icon.png
+
 ======
 Guidoc
 ======
