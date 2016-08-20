@@ -1,4 +1,4 @@
-.. image:: http://kevinpt.github.io/guidoc/_images/guidoc_icon.png
+.. image:: http://kevinpt.github.io/guidoc/_static/guidoc_icon.png
 
 ======
 Guidoc
