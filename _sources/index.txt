@@ -8,7 +8,7 @@
 Guidoc
 ======
 
-Guidoc is a Python package that allows you to create `Tkinter <https://wiki.python.org/moin/TkInter>`_ widget layouts using a simple docstring specification. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.
+Guidoc is a Python package that allows you to create `Tkinter <https://wiki.python.org/moin/TkInter>`_ widget layouts using a simple `docstring specification`_. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.
 
 Guidoc saves you from the challenge of writing and managing complex Tkinter layouts as you can easily see the parent-child relationships between widgets and menu items. Grid layouts are easy to modify at a later date without having to decipher the row and column indices.
 
@@ -56,7 +56,7 @@ What happens here is the ``tk_layout`` decorator parses the Guidoc specification
   The examples in this documentation use Python 2.7 syntax. The "Tkinter" library was renamed to "tkinter" in Python 3.x.
 
   
-The ``guidoc.py`` file functions as a standalone module and can be directly copied into your projects. It also functions as a command line tool for static code generation.
+The ``guidoc.py`` file functions as a standalone module and can be directly copied into your projects. It also functions as a `command line tool for static code generation`_.
 
 With no command line arguments the ``guidoc.py`` module will launch a demo app:
 
@@ -132,6 +132,7 @@ If you can't use the installer script, it is possible to use ``guidoc.py`` direc
 
   > 2to3 -w guidoc.py
 
+.. _docstring specification:
 
 Guidoc specification syntax
 ---------------------------
@@ -323,11 +324,11 @@ You use the ``tk_layout`` class decorator to dynamically generate the layout met
     The name of the method to generate. This defaults to "_build_widgets"
     
   require_docutils
-    Raise an exception when docutils is not present. This defaults to False.
+    Raise a ``GridError`` exception when docutils is not present. This defaults to False.
 
 The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as ``Frame`` or ``Toplevel``. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.
 
-The original layout is accessible through the ``_guidoc`` attribute of the class.
+The original layout string is accessible through the ``_guidoc`` attribute of the class.
 
 Your ``__init__`` method should instantiate any Tkinter variables needed by the ``_build_widgets()`` method. After calling the method you can continue to configure the widgets with event bindings and other activities.
 
@@ -346,18 +347,39 @@ Your ``__init__`` method should instantiate any Tkinter variables needed by the 
       
       # Finish configuring the widgets and menus here
 
+.. _command line tool for static code generation:
+
 Static generation
 -----------------
 
+If you wish to distribute code without a dependency on Guidoc it is possible to statically generate the ``_build_widgets()`` method for insertion into your code. The easiest way is to use ``guidoc`` module on the command line with the ``-i`` option. It outputs the generated Python code to stdout.
 
+.. code-block:: sh
+
+  > guidoc -i layout_spec.txt > build_method.py
+  > cat layout_spec.txt | guidoc -i - > build_method.py
+
+
+You can also generate the code from within Python. The ``create_layout_method()`` function generates the Python code for the layout.
+
+.. code-block:: python
+
+  from guidoc import create_layout_method
+  
+  ...
+  
+  spec = '''
+    # Layout specification here
+  '''
+  
+  py_code = create_layout_method(spec, '_build_widgets')
+
+    
     
 Error handling
 --------------
 
-
-Debugging
----------
-
+Guidoc code is only executed once at application startup for each decorated class. All error conditions are reported through exceptions. Invalid syntax in the widget, grid, and menu sections will raise an exception with some explanatory text descirbing the issue. If you depend on the grid parsing from docutils you can set the ``require_docutils`` argument of ``tk_layout()`` to ``True`` to force a ``GridException`` to be raised when the library is missing. You must resolve all exceptions before the application can produce a usable layout method. 
 
 
 .. toctree::

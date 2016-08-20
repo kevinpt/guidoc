@@ -40,7 +40,7 @@
             
   <div class="section" id="guidoc">
 <h1>Guidoc<a class="headerlink" href="#guidoc" title="Permalink to this headline">¶</a></h1>
-<p>Guidoc is a Python package that allows you to create <a class="reference external" href="https://wiki.python.org/moin/TkInter">Tkinter</a> widget layouts using a simple docstring specification. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.</p>
+<p>Guidoc is a Python package that allows you to create <a class="reference external" href="https://wiki.python.org/moin/TkInter">Tkinter</a> widget layouts using a simple <a class="reference internal" href="#docstring-specification">docstring specification</a>. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.</p>
 <p>Guidoc saves you from the challenge of writing and managing complex Tkinter layouts as you can easily see the parent-child relationships between widgets and menu items. Grid layouts are easy to modify at a later date without having to decipher the row and column indices.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">Tkinter</span> <span class="kn">as</span> <span class="nn">tk</span>
 <span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">tk_layout</span>
@@ -80,7 +80,7 @@
 <p class="first admonition-title">Note</p>
 <p class="last">The examples in this documentation use Python 2.7 syntax. The &#8220;Tkinter&#8221; library was renamed to &#8220;tkinter&#8221; in Python 3.x.</p>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">guidoc.py</span></tt> file functions as a standalone module and can be directly copied into your projects. It also functions as a command line tool for static code generation.</p>
+<p>The <tt class="docutils literal"><span class="pre">guidoc.py</span></tt> file functions as a standalone module and can be directly copied into your projects. It also functions as a <a class="reference internal" href="#command-line-tool-for-static-code-generation">command line tool for static code generation</a>.</p>
 <p>With no command line arguments the <tt class="docutils literal"><span class="pre">guidoc.py</span></tt> module will launch a demo app:</p>
 <div class="highlight-sh"><div class="highlight"><pre>&gt; guidoc
 </pre></div>
@@ -130,7 +130,7 @@ command if you have it available.</p>
 </div>
 </div>
 <div class="section" id="guidoc-specification-syntax">
-<h2>Guidoc specification syntax<a class="headerlink" href="#guidoc-specification-syntax" title="Permalink to this headline">¶</a></h2>
+<span id="docstring-specification"></span><h2>Guidoc specification syntax<a class="headerlink" href="#guidoc-specification-syntax" title="Permalink to this headline">¶</a></h2>
 <p>The heart of using Guidoc is the layout specification. It is a string or separate file containing a description of the Tkinter GUI elements that will be generated.</p>
 <p>A specification is composed of a sequence of sections. Each section begins with a line in square brackets containing the section type and an optional parameter. Section type names are case insensitive.</p>
 <div class="figure align-center">
@@ -271,11 +271,11 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 <dt>method_name</dt>
 <dd>The name of the method to generate. This defaults to &#8220;_build_widgets&#8221;</dd>
 <dt>require_docutils</dt>
-<dd>Raise an exception when docutils is not present. This defaults to False.</dd>
+<dd>Raise a <tt class="docutils literal"><span class="pre">GridError</span></tt> exception when docutils is not present. This defaults to False.</dd>
 </dl>
 </div></blockquote>
 <p>The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as <tt class="docutils literal"><span class="pre">Frame</span></tt> or <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.</p>
-<p>The original layout is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class.</p>
+<p>The original layout string is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class.</p>
 <p>Your <tt class="docutils literal"><span class="pre">__init__</span></tt> method should instantiate any Tkinter variables needed by the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method. After calling the method you can continue to configure the widgets with event bindings and other activities.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="nd">@tk_layout</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span>
 <span class="s"># Your layout specification goes here</span>
@@ -293,13 +293,28 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 </div>
 </div>
 <div class="section" id="static-generation">
-<h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
+<span id="command-line-tool-for-static-code-generation"></span><h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
+<p>If you wish to distribute code without a dependency on Guidoc it is possible to statically generate the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method for insertion into your code. The easiest way is to use <tt class="docutils literal"><span class="pre">guidoc</span></tt> module on the command line with the <tt class="docutils literal"><span class="pre">-i</span></tt> option. It outputs the generated Python code to stdout.</p>
+<div class="highlight-sh"><div class="highlight"><pre>&gt; guidoc -i layout_spec.txt &gt; build_method.py
+&gt; cat layout_spec.txt <span class="p">|</span> guidoc -i - &gt; build_method.py
+</pre></div>
+</div>
+<p>You can also generate the code from within Python. The <tt class="docutils literal"><span class="pre">create_layout_method()</span></tt> function generates the Python code for the layout.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">create_layout_method</span>
+
+<span class="o">...</span>
+
+<span class="n">spec</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
+<span class="s">  # Layout specification here</span>
+<span class="s">&#39;&#39;&#39;</span>
+
+<span class="n">py_code</span> <span class="o">=</span> <span class="n">create_layout_method</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s">&#39;_build_widgets&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="error-handling">
 <h2>Error handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="debugging">
-<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>Guidoc code is only executed once at application startup for each decorated class. All error conditions are reported through exceptions. Invalid syntax in the widget, grid, and menu sections will raise an exception with some explanatory text descirbing the issue. If you depend on the grid parsing from docutils you can set the <tt class="docutils literal"><span class="pre">require_docutils</span></tt> argument of <tt class="docutils literal"><span class="pre">tk_layout()</span></tt> to <tt class="docutils literal"><span class="pre">True</span></tt> to force a <tt class="docutils literal"><span class="pre">GridException</span></tt> to be raised when the library is missing. You must resolve all exceptions before the application can produce a usable layout method.</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -367,7 +382,6 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 <li><a class="reference internal" href="#using-the-decorator">Using the decorator</a></li>
 <li><a class="reference internal" href="#static-generation">Static generation</a></li>
 <li><a class="reference internal" href="#error-handling">Error handling</a></li>
-<li><a class="reference internal" href="#debugging">Debugging</a></li>
 <li><a class="reference internal" href="#licensing">Licensing</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
