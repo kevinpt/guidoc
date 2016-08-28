@@ -44,7 +44,7 @@ except ImportError:
   have_docutils = False
 
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 
 class LayoutError(Exception):
   '''Base exception for guisdoc'''
@@ -652,15 +652,9 @@ class MenuSection(Section):
     
     yield '# Menu: {}'.format(menu_name)
     
-    yield 'self.{} = {}Menu({})'.format(menu_name, lib_prefix, parent)
+    yield 'self.{} = {}Menu({}, tearoff=0)'.format(menu_name, lib_prefix, parent)
     for l in MenuSection.generate_menu_code(self.items, menu_name, menu_name, lib_prefix):
       yield l
-
-    # Build menu entry indices
-    indices = {}
-    for i, item in enumerate(self.items):
-      indices[item.label] = (i,)
-    yield 'self.{}.indices = '.format(menu_name) + repr(indices)
 
     # Automatically configure menu if it has the default name
     # Any other menu must be manually installed
@@ -898,19 +892,31 @@ def create_layout_method(layout, method_name, parent='self', lib_prefix=None, cl
   return method
     
 
-def tk_layout(layout, lib_prefix=None, method_name='_build_widgets', require_docutils=False):
+def tk_layout(layout='', lib_prefix=None, method_name='_build_widgets', layout_file=None, require_docutils=False):
   '''Class decorator to parse a layout spec and add a builder method for the layout
   Args:
-    layout (str): Layout specification
+    layout (str, optional): Layout specification
     lib_prefix (str, optional): Python library prefix for all Tk widgets
     method_name (str, optional): The name of the method to add to the class
+    file_name (str, optional): File containing layout specification. Only used when layout is empty.
     require_docutils (bool, optional): Require docutils library when True. Ignore grid sections when False.
   '''
+  
+  if not layout and layout_file:
+    try:
+      with open(layout_file, 'r') as fh:
+        layout = fh.read()
+    except IOError:
+      pass
+  
+  # We require either a layout or a valid file_name
+  assert layout, 'Missing layout specification'
+  
   def layout_tk_class(cls):
     code = create_layout_method(layout, method_name, 'self', lib_prefix, cls.__name__, require_docutils)
     co = compile_method(code, method_name)
     if co:
-      setattr(cls, method_name, co) # Add method to the class
+      setattr(cls, method_name, co)   # Add method to the class
       setattr(cls, '_guidoc', layout) # Save the original layout
 
     return cls
@@ -1000,7 +1006,14 @@ class GuidocDemoApp(tk.Frame):
     self.radioVal.trace('w', lambda *args: self.lblStatus.config(text = 'Radio choice is {}'.format(self.radioVal.get())))
 
 
-    print('## Indices:', self.menubar.indices)
+    #self.menubar.e.entryconfig('Save', state='disabled')
+    #self.menubar.component('File').entryconfig('Save', state='disabled')
+#    self.menubar.entryconfig(1, state='disabled')
+#    self.menubarFile.entryconfig('Save', state='disabled')
+#    self.menubarProperty_settings.entryconfig(1, state='disabled')
+    for m in dir(self):
+      if m.startswith('menu'):
+        print('## MENU:', m)
 
     
   def show_about(self):
