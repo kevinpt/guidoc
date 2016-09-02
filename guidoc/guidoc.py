@@ -35,6 +35,7 @@ import Tkinter as tk
 import re
 import sys
 import string
+import types
 from datetime import datetime
 
 try:
@@ -130,18 +131,31 @@ def find_tkinter_name():
   else:
     return None
 
+def lib_imports(glbls):
+  '''Extract all packages from a global namespace
 
-def compile_method(code, method_name):
+  args:
+    glbls (dict): Globals to take packages from
+  returns:
+    Dictionary of all packages except '__builtins__'
+  '''
+  lib_names = [n for n, v in glbls.iteritems() if n != '__builtins__' and isinstance(v, types.ModuleType)]
+  return {k:glbls[k] for k in lib_names}
+
+
+def compile_method(code, method_name, libraries={}):
   '''Compile a code string into a code object
   The code must contain a function definition which will be used as a method.
   
   Args:
     code (str):        Python source code to compile
     method_name (str): Name of method defined by the code
+    libraries (dict, optional): Dictionary of packages used by the code
   Returns:
     code object: The compiled code object for the method or None
   '''
   glbls = globals().copy()
+  glbls.update(libraries) # Make libraries from user code visible to exec
   exec(code, glbls)
   
   if method_name in glbls:
@@ -890,13 +904,14 @@ def create_layout_method(layout, method_name, parent='self', lib_prefix=None, cl
 
   #print(method)
   return method
-    
 
-def tk_layout(layout='', lib_prefix=None, method_name='_build_widgets', layout_file=None, require_docutils=False):
+
+def tk_layout(layout='', lib_prefix=None, libraries={}, method_name='_build_widgets', layout_file=None, require_docutils=False):
   '''Class decorator to parse a layout spec and add a builder method for the layout
   Args:
     layout (str, optional): Layout specification
     lib_prefix (str, optional): Python library prefix for all Tk widgets
+    libraries (dict, optional): Dictionary of user packages keyed by name
     method_name (str, optional): The name of the method to add to the class
     file_name (str, optional): File containing layout specification. Only used when layout is empty.
     require_docutils (bool, optional): Require docutils library when True. Ignore grid sections when False.
@@ -914,7 +929,7 @@ def tk_layout(layout='', lib_prefix=None, method_name='_build_widgets', layout_f
   
   def layout_tk_class(cls):
     code = create_layout_method(layout, method_name, 'self', lib_prefix, cls.__name__, require_docutils)
-    co = compile_method(code, method_name)
+    co = compile_method(code, method_name, libraries)
     if co:
       setattr(cls, method_name, co)   # Add method to the class
       setattr(cls, '_guidoc', layout) # Save the original layout
