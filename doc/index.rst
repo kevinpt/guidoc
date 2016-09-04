@@ -316,13 +316,16 @@ With a menu bar, the first level of hierarchy becomes the top level menu. Subseq
 Using the decorator
 -------------------
 
-You use the ``tk_layout`` class decorator to dynamically generate the layout method. It is called with the following parameters:
+You use the ``tk_layout`` class decorator to dynamically generate the layout method. It modifies the class object by inserting a new ``_build_widgets()`` method. ``tk_layout`` is called with the following parameters:
 
   layout
     The layout specification. This is the only required parameter. It can be provided in place as a docstring. Use a raw docstring if you need to embed escaped characters.
    
   lib_prefix
     The Python library prefix to prepend on widget constructors
+    
+  libraries
+    Dictionary of of library packages referenced in the specification. This can be generated with the ``lib_imports()`` function.
     
   method_name
     The name of the method to generate. This defaults to "_build_widgets"
@@ -331,9 +334,23 @@ You use the ``tk_layout`` class decorator to dynamically generate the layout met
     An optional path to a text file with the layout specification. Only used when layout is empty.
     
   require_docutils
-    Raise a ``GridError`` exception when docutils is not present. This defaults to False.
+    Raise a ``GridError`` exception when docutils is not present and a grid section is in a specification. This defaults to False.
 
 The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as ``Frame`` or ``Toplevel``. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.
+
+If you want to refer to widgets outside of the Tkinter/tkinter package it is necessary to provide their packages as the ``libraries`` argument. Otherwise the Guidoc module can't see them when it compiles the layout specification into a code object. The ``lib_imports()`` helper function will scan your application's namespace for all imported packages and generate the ``dict`` used by this argument. You must pass in the contents of the ``globals()`` ``dict`` for it to search the packages.
+
+.. code-block:: python
+
+  import mywidgets as mw  # Using widgets from a separate package
+  from guidoc import tk_layout, lib_imports
+  
+  @tk_layout('''
+  myButton(mw.Button | text='Custom')
+  ''', libraries=lib_imports(globals()))
+  class MyApp(tk.Frame):
+    ...
+  
 
 It you want the layout stored in a separate file you can use the ``layout_file`` agument to access it.
 
@@ -342,8 +359,6 @@ It you want the layout stored in a separate file you can use the ``layout_file``
   @tk_layout(layout_file='my_layout.txt')
   class MyDialog(tk.Frame)
     ...
-
-The original layout string is accessible through the ``_guidoc`` attribute of the class.
 
 Your ``__init__`` method should instantiate any Tkinter variables needed by the ``_build_widgets()`` method. After calling the method you can continue to configure the widgets with event bindings and other activities.
 
@@ -364,6 +379,13 @@ Your ``__init__`` method should instantiate any Tkinter variables needed by the 
 
 .. _command line tool for static code generation:
 
+The original layout string is accessible through the ``_guidoc`` attribute of the class. The ``dump_layouts()`` convenience function will scan a namespace for any objects containing this attribute and write the value out to a file "<object name>.guidoc". This can help automate generation of static ``_build_widgets()`` methods.
+
+.. code-block:: python
+  from guidoc import dump_layouts
+  
+  dump_layouts(globals()) # Dump all layouts available within the current module
+
 Static generation
 -----------------
 
@@ -375,7 +397,7 @@ If you wish to distribute code without a dependency on Guidoc it is possible to 
   > cat layout_spec.txt | guidoc -i - > build_method.py
 
 
-You can also generate the code from within Python. The ``create_layout_method()`` function generates the Python code for the layout.
+You can also generate the code from within Python. The function ``create_layout_method()`` generates the Python code for the layout.
 
 .. code-block:: python
 
@@ -420,7 +442,8 @@ It is possible to create an application that automatically switches between the 
   app = MyApp(root)
   app.pack()
   root.mainloop()
-    
+
+Any helper functions you use will also need to have a dummy substitude created.
     
 Error handling
 --------------
