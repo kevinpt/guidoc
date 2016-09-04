@@ -939,6 +939,27 @@ def tk_layout(layout='', lib_prefix=None, libraries={}, method_name='_build_widg
   return layout_tk_class
 
 
+def dump_layouts(glbls):
+  '''Dump all guidoc layouts found within a namespace
+  This writes a file with the contents of the '_guidoc' attribute
+  from every object in the glbls dict. This allows you to generate
+  static _build_widgets() methods with the guidoc command line mode.
+
+  Args:
+    glbls (dict): Dictionary of namespace objects produced by the globals() function.
+
+  Returns:
+    list: List of the files written
+  '''
+  for k in glbls.iterkeys():
+    files = []
+    if hasattr(glbls[k], '_guidoc'):
+      fname = k + '.guidoc'
+      with open(fname, 'w') as fh:
+        fh.write(glbls[k]._guidoc)
+        files.append(fname)
+  return files
+
 
 @tk_layout('''
 btnA(Button | text='Button A')
@@ -1040,6 +1061,7 @@ def guidoc_demo():
   global msgbox
 
   print('Starting guidoc demonstration...')
+
   root = tk.Tk()
   app = GuidocDemoApp(root)
   root.mainloop()
