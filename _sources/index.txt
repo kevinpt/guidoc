@@ -10,7 +10,7 @@ Guidoc
 
 Guidoc is a Python package that allows you to create `Tkinter <https://wiki.python.org/moin/TkInter>`_ widget layouts using a simple `docstring specification`_. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.
 
-Guidoc saves you from the challenge of writing and managing complex Tkinter layouts as you can easily see the parent-child relationships between widgets and menu items. Grid layouts are easy to modify at a later date without having to decipher the row and column indices.
+Guidoc saves you from the challenge of writing and managing complex Tkinter layouts. You can easily see the parent-child relationships between widgets and menu items and change the hierarchy with ease. Grid layouts are easy to modify at a later date without having to decipher the long forgotten row and column indices.
 
 
 .. code-block:: python
@@ -259,7 +259,7 @@ Each grid cell in the table contains a single widget name corresponding to the n
 
 The section parameter for the grid identifies which widget the grid applies to. This must be the name of a container widget that can serve as the parent to child widgets. These are ``Frame`` and ``Toplevel`` in the built in Tkinter classes. One grid section can have its parameter omitted in which case it applies to the top level widgets for the new class being defined in your code.
 
-After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in additional rows under column one.
+After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default geometry manager changed to grid as well and they will be stacked in additional rows under column one.
 
 Sibling widgets that have been explicitly set to use the ``pack`` or ``place`` geometry managers will conflict with the use of the ``grid`` geometry manager. This will cause an exception and terminate parsing of the specification.
 
@@ -310,14 +310,13 @@ For check and radio button items you will want to use the appropriate Tkinter va
 
 .. image:: images/scripts/menu.png
 
-With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled by default for a more up to date rendering style.
+With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled for a more up to date rendering style.
 
-Internally the Tk library uses numeric indices to refer to menu entries. To help track these indices a ``dict`` called "indices" is inserted into the top level menu widget whose keys are the text of the menu entry.
 
 Using the decorator
 -------------------
 
-You use the ``tk_layout`` class decorator to dynamically generate the layout method. It is called with the following parameters:
+You use the ``tk_layout`` class decorator to dynamically generate the layout method. It modifies the class object by inserting a new ``_build_widgets()`` method. ``tk_layout`` is called with the following parameters:
 
   layout
     The layout specification. This is the only required parameter. It can be provided in place as a docstring. Use a raw docstring if you need to embed escaped characters.
@@ -325,15 +324,41 @@ You use the ``tk_layout`` class decorator to dynamically generate the layout met
   lib_prefix
     The Python library prefix to prepend on widget constructors
     
+  libraries
+    Dictionary of of library packages referenced in the specification. This can be generated with the ``lib_imports()`` function.
+    
   method_name
     The name of the method to generate. This defaults to "_build_widgets"
     
+  layout_file
+    An optional path to a text file with the layout specification. Only used when layout is empty.
+    
   require_docutils
-    Raise a ``GridError`` exception when docutils is not present. This defaults to False.
+    Raise a ``GridError`` exception when docutils is not present and a grid section is in a specification. This defaults to False.
 
 The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as ``Frame`` or ``Toplevel``. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.
 
-The original layout string is accessible through the ``_guidoc`` attribute of the class.
+If you want to refer to widgets outside of the Tkinter/tkinter package it is necessary to provide their packages as the ``libraries`` argument. Otherwise the Guidoc module can't see them when it compiles the layout specification into a code object. The ``lib_imports()`` helper function will scan your application's namespace for all imported packages and generate the ``dict`` used by this argument. You must pass in the contents of the ``globals()`` ``dict`` for it to search the packages.
+
+.. code-block:: python
+
+  import mywidgets as mw  # Using widgets from a separate package
+  from guidoc import tk_layout, lib_imports
+  
+  @tk_layout('''
+  myButton(mw.Button | text='Custom')
+  ''', libraries=lib_imports(globals()))
+  class MyApp(tk.Frame):
+    ...
+  
+
+It you want the layout stored in a separate file you can use the ``layout_file`` agument to access it.
+
+.. code-block:: python
+
+  @tk_layout(layout_file='my_layout.txt')
+  class MyDialog(tk.Frame)
+    ...
 
 Your ``__init__`` method should instantiate any Tkinter variables needed by the ``_build_widgets()`` method. After calling the method you can continue to configure the widgets with event bindings and other activities.
 
@@ -342,7 +367,7 @@ Your ``__init__`` method should instantiate any Tkinter variables needed by the 
   @tk_layout('''
   # Your layout specification goes here
   ''')
-  class MyFialog(tk.Frame):
+  class MyDialog(tk.Frame):
     def __init__(self, parent):
       tk.Frame.__init__(self, parent)
 
@@ -353,6 +378,13 @@ Your ``__init__`` method should instantiate any Tkinter variables needed by the 
       # Finish configuring the widgets and menus here
 
 .. _command line tool for static code generation:
+
+The original layout string is accessible through the ``_guidoc`` attribute of the class. The ``dump_layouts()`` convenience function will scan a namespace for any objects containing this attribute and write the value out to a file "<object name>.guidoc". This can help automate generation of static ``_build_widgets()`` methods.
+
+.. code-block:: python
+  from guidoc import dump_layouts
+  
+  dump_layouts(globals()) # Dump all layouts available within the current module
 
 Static generation
 -----------------
@@ -365,7 +397,7 @@ If you wish to distribute code without a dependency on Guidoc it is possible to 
   > cat layout_spec.txt | guidoc -i - > build_method.py
 
 
-You can also generate the code from within Python. The ``create_layout_method()`` function generates the Python code for the layout.
+You can also generate the code from within Python. The function ``create_layout_method()`` generates the Python code for the layout.
 
 .. code-block:: python
 
@@ -379,7 +411,39 @@ You can also generate the code from within Python. The ``create_layout_method()`
   
   py_code = create_layout_method(spec, '_build_widgets')
 
-    
+
+It is possible to create an application that automatically switches between the dynamic layout built from a specification and a fixed static method based on the availability of Guidoc. When Guidoc is missing you define a dummy ``tk_layout()`` decorator that does nothing. In this way you can keep the ``tk_layout()`` decorator in place for documentation purposes and still distribute an application that is not dependent on Guidoc.
+
+.. code-block:: python
+
+  import Tkinter as tk
+
+  # Create a dummy decorator if Guidoc is missing
+  try:
+    from guidoc import tk_layout
+  except ImportError:
+    def tk_layout(*args, **kwargs):
+      return lambda cls: cls
+
+  @tk_layout('''btnTest(Button | text="Guidoc button")''')
+  class MyApp(tk.Frame):
+    def __init__(self, parent):
+      tk.Frame.__init__(self, parent)
+      self._build_widgets()
+
+    # This method is replaced by the real tk_layout decorator when Guidoc is available
+    def _build_widgets(self):
+      # Your static widget code here
+      self.btnTest = tk.Button(text='Static button')
+      self.btnTest.pack()
+
+
+  root = tk.Tk()
+  app = MyApp(root)
+  app.pack()
+  root.mainloop()
+
+Any helper functions you use will also need to have a dummy substitude created.
     
 Error handling
 --------------

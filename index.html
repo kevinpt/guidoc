@@ -41,7 +41,7 @@
   <div class="section" id="guidoc">
 <h1>Guidoc<a class="headerlink" href="#guidoc" title="Permalink to this headline">¶</a></h1>
 <p>Guidoc is a Python package that allows you to create <a class="reference external" href="https://wiki.python.org/moin/TkInter">Tkinter</a> widget layouts using a simple <a class="reference internal" href="#docstring-specification">docstring specification</a>. It can be used dynamically with docstrings passed to a class decorator or to statically generate a layout method from a specification file. The specification lets you describe a widget hierarchy in a compact form with a simple indented list. This is also used to compactly describe menus. When the docutils package is installed, grid layouts can be described using ASCII tables to visually indicate where widgets are located and how they span rows or columns.</p>
-<p>Guidoc saves you from the challenge of writing and managing complex Tkinter layouts as you can easily see the parent-child relationships between widgets and menu items. Grid layouts are easy to modify at a later date without having to decipher the row and column indices.</p>
+<p>Guidoc saves you from the challenge of writing and managing complex Tkinter layouts. You can easily see the parent-child relationships between widgets and menu items and change the hierarchy with ease. Grid layouts are easy to modify at a later date without having to decipher the long forgotten row and column indices.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">Tkinter</span> <span class="kn">as</span> <span class="nn">tk</span>
 <span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">tk_layout</span>
 
@@ -219,7 +219,7 @@ lblX lblY
 </div>
 <img alt="_images/gridded.png" src="_images/gridded.png" />
 <p>The section parameter for the grid identifies which widget the grid applies to. This must be the name of a container widget that can serve as the parent to child widgets. These are <tt class="docutils literal"><span class="pre">Frame</span></tt> and <tt class="docutils literal"><span class="pre">Toplevel</span></tt> in the built in Tkinter classes. One grid section can have its parameter omitted in which case it applies to the top level widgets for the new class being defined in your code.</p>
-<p>After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default layout manager changed to grid as well and they will be stacked in additional rows under column one.</p>
+<p>After the grid is parsed, all widgets identified in the grid are converted to use the grid geometry manager. The cell coordinates and row/column span data are added to the widget specifications. Any sibling widgets missing from the grid have their default geometry manager changed to grid as well and they will be stacked in additional rows under column one.</p>
 <p>Sibling widgets that have been explicitly set to use the <tt class="docutils literal"><span class="pre">pack</span></tt> or <tt class="docutils literal"><span class="pre">place</span></tt> geometry managers will conflict with the use of the <tt class="docutils literal"><span class="pre">grid</span></tt> geometry manager. This will cause an exception and terminate parsing of the specification.</p>
 </div>
 <div class="section" id="menu-sections">
@@ -259,32 +259,51 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 </pre></div>
 </div>
 <img alt="_images/menu.png" src="_images/menu.png" />
-<p>With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled by default for a more up to date rendering style.</p>
-<p>Internally the Tk library uses numeric indices to refer to menu entries. To help track these indices a <tt class="docutils literal"><span class="pre">dict</span></tt> called &#8220;indices&#8221; is inserted into the top level menu widget whose keys are the text of the menu entry.</p>
+<p>With a menu bar, the first level of hierarchy becomes the top level menu. Subsequent levels are pull down cascade menus. Each cascade menu has its tearoff property disabled for a more up to date rendering style.</p>
 </div>
 </div>
 <div class="section" id="using-the-decorator">
 <h2>Using the decorator<a class="headerlink" href="#using-the-decorator" title="Permalink to this headline">¶</a></h2>
-<p>You use the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> class decorator to dynamically generate the layout method. It is called with the following parameters:</p>
+<p>You use the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> class decorator to dynamically generate the layout method. It modifies the class object by inserting a new <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method. <tt class="docutils literal"><span class="pre">tk_layout</span></tt> is called with the following parameters:</p>
 <blockquote>
 <div><dl class="docutils">
 <dt>layout</dt>
 <dd>The layout specification. This is the only required parameter. It can be provided in place as a docstring. Use a raw docstring if you need to embed escaped characters.</dd>
 <dt>lib_prefix</dt>
 <dd>The Python library prefix to prepend on widget constructors</dd>
+<dt>libraries</dt>
+<dd>Dictionary of of library packages referenced in the specification. This can be generated with the <tt class="docutils literal"><span class="pre">lib_imports()</span></tt> function.</dd>
 <dt>method_name</dt>
 <dd>The name of the method to generate. This defaults to &#8220;_build_widgets&#8221;</dd>
+<dt>layout_file</dt>
+<dd>An optional path to a text file with the layout specification. Only used when layout is empty.</dd>
 <dt>require_docutils</dt>
-<dd>Raise a <tt class="docutils literal"><span class="pre">GridError</span></tt> exception when docutils is not present. This defaults to False.</dd>
+<dd>Raise a <tt class="docutils literal"><span class="pre">GridError</span></tt> exception when docutils is not present and a grid section is in a specification. This defaults to False.</dd>
 </dl>
 </div></blockquote>
 <p>The decorator is used on the widget subclass you create for your program. This class should inherit from any Tkinter container widget such as <tt class="docutils literal"><span class="pre">Frame</span></tt> or <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. It is only ran once before Python creates the class object, parsing the specification and inserting the generated method. After that no part of Guidoc will execute in your program.</p>
-<p>The original layout string is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class.</p>
+<p>If you want to refer to widgets outside of the Tkinter/tkinter package it is necessary to provide their packages as the <tt class="docutils literal"><span class="pre">libraries</span></tt> argument. Otherwise the Guidoc module can&#8217;t see them when it compiles the layout specification into a code object. The <tt class="docutils literal"><span class="pre">lib_imports()</span></tt> helper function will scan your application&#8217;s namespace for all imported packages and generate the <tt class="docutils literal"><span class="pre">dict</span></tt> used by this argument. You must pass in the contents of the <tt class="docutils literal"><span class="pre">globals()</span></tt> <tt class="docutils literal"><span class="pre">dict</span></tt> for it to search the packages.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mywidgets</span> <span class="kn">as</span> <span class="nn">mw</span>  <span class="c"># Using widgets from a separate package</span>
+<span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">tk_layout</span><span class="p">,</span> <span class="n">lib_imports</span>
+
+<span class="nd">@tk_layout</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span>
+<span class="s">myButton(mw.Button | text=&#39;Custom&#39;)</span>
+<span class="s">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="n">lib_imports</span><span class="p">(</span><span class="nb">globals</span><span class="p">()))</span>
+<span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
+<p>It you want the layout stored in a separate file you can use the <tt class="docutils literal"><span class="pre">layout_file</span></tt> agument to access it.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@tk_layout</span><span class="p">(</span><span class="n">layout_file</span><span class="o">=</span><span class="s">&#39;my_layout.txt&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">MyDialog</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">)</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
 <p>Your <tt class="docutils literal"><span class="pre">__init__</span></tt> method should instantiate any Tkinter variables needed by the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method. After calling the method you can continue to configure the widgets with event bindings and other activities.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="nd">@tk_layout</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span>
 <span class="s"># Your layout specification goes here</span>
 <span class="s">&#39;&#39;&#39;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">MyFialog</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyDialog</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
     <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
 
@@ -295,15 +314,16 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
     <span class="c"># Finish configuring the widgets and menus here</span>
 </pre></div>
 </div>
+<p id="command-line-tool-for-static-code-generation">The original layout string is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class. The <tt class="docutils literal"><span class="pre">dump_layouts()</span></tt> convenience function will scan a namespace for any objects containing this attribute and write the value out to a file &#8220;&lt;object name&gt;.guidoc&#8221;. This can help automate generation of static <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> methods.</p>
 </div>
 <div class="section" id="static-generation">
-<span id="command-line-tool-for-static-code-generation"></span><h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
+<h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
 <p>If you wish to distribute code without a dependency on Guidoc it is possible to statically generate the <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> method for insertion into your code. The easiest way is to use <tt class="docutils literal"><span class="pre">guidoc</span></tt> module on the command line with the <tt class="docutils literal"><span class="pre">-i</span></tt> option. It outputs the generated Python code to stdout.</p>
 <div class="highlight-sh"><div class="highlight"><pre>&gt; guidoc -i layout_spec.txt &gt; build_method.py
 &gt; cat layout_spec.txt <span class="p">|</span> guidoc -i - &gt; build_method.py
 </pre></div>
 </div>
-<p>You can also generate the code from within Python. The <tt class="docutils literal"><span class="pre">create_layout_method()</span></tt> function generates the Python code for the layout.</p>
+<p>You can also generate the code from within Python. The function <tt class="docutils literal"><span class="pre">create_layout_method()</span></tt> generates the Python code for the layout.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">create_layout_method</span>
 
 <span class="o">...</span>
@@ -315,6 +335,36 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 <span class="n">py_code</span> <span class="o">=</span> <span class="n">create_layout_method</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s">&#39;_build_widgets&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>It is possible to create an application that automatically switches between the dynamic layout built from a specification and a fixed static method based on the availability of Guidoc. When Guidoc is missing you define a dummy <tt class="docutils literal"><span class="pre">tk_layout()</span></tt> decorator that does nothing. In this way you can keep the <tt class="docutils literal"><span class="pre">tk_layout()</span></tt> decorator in place for documentation purposes and still distribute an application that is not dependent on Guidoc.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">Tkinter</span> <span class="kn">as</span> <span class="nn">tk</span>
+
+<span class="c"># Create a dummy decorator if Guidoc is missing</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">tk_layout</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+  <span class="k">def</span> <span class="nf">tk_layout</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">cls</span><span class="p">:</span> <span class="n">cls</span>
+
+<span class="nd">@tk_layout</span><span class="p">(</span><span class="s">&#39;&#39;&#39;btnTest(Button | text=&quot;Guidoc button&quot;)&#39;&#39;&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">MyApp</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+    <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_build_widgets</span><span class="p">()</span>
+
+  <span class="c"># This method is replaced by the real tk_layout decorator when Guidoc is available</span>
+  <span class="k">def</span> <span class="nf">_build_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c"># Your static widget code here</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">btnTest</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s">&#39;Static button&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">btnTest</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+
+<span class="n">root</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">MyApp</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">root</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Any helper functions you use will also need to have a dummy substitude created.</p>
 </div>
 <div class="section" id="error-handling">
 <h2>Error handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
