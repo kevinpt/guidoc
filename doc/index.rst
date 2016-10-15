@@ -146,11 +146,11 @@ The heart of using Guidoc is the layout specification. It is a string or separat
 
 A specification is composed of a sequence of sections. Each section begins with a line in square brackets containing the section type and an optional parameter. Section type names are case insensitive.
 
-
-.. figure:: images/guidoc_section.spec.png
+.. figure:: images/syntax_section.svg
   :align: center
 
   Widget section heading syntax
+
   
 Sections can be in any order. There can be only one widgets section but any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the "[widgets]" section heading and begin the widget definitions immediately.
 
@@ -162,7 +162,7 @@ Widgets section
 
 All of the widgets to be created in the layout are listed in the widgets section, one widget per line. An indented widget is the child of the parent widget at the previous indentation level. Tabs are not recognized as indentation, only spaces. Blank lines are ignored. They don't affect the hierarchy. A widget specification consists of the following:
 
-.. figure:: images/guidoc_widget.spec.png
+.. figure:: images/syntax_widget.svg
   :align: center
 
   Widget specification syntax
@@ -200,10 +200,11 @@ The Guidoc package will attempt to discover the name of the Tkinter library and 
   
 All widgets default to using the ``pack`` geometry manager. You can override the default by appending a geometry manager configuration to the end of the widget definition. This lets you pass configuration parameters or change to the ``grid`` or ``place`` managers if needed. It has the following syntax:
 
-.. figure:: images/guidoc_widget_geometry.spec.png
+.. figure:: images/syntax_widget_geometry.svg
   :align: center
 
   Geometry manager configuration syntax
+
 
 .. note::
  
@@ -269,10 +270,11 @@ Menu sections
 
 Menus can be described in a hierarchical fashion similar to widgets. Each menu section describes a single menu tree. A row in the menu specification describes a single menu item with the following syntax:
 
-.. figure:: images/guidoc_menu.spec.png
+.. figure:: images/syntax_menu.svg
   :align: center
 
   Menu item syntax
+
 
 The menu text must be quoted if it contains spaces. You can prefix a character with "&" in the text to mark it as a keyboard accelerator. Check button menu items are preceded by "[]" and radio button items by "*".
 
@@ -382,6 +384,7 @@ Your ``__init__`` method should instantiate any Tkinter variables needed by the 
 The original layout string is accessible through the ``_guidoc`` attribute of the class. The ``dump_layouts()`` convenience function will scan a namespace for any objects containing this attribute and write the value out to a file "<object name>.guidoc". This can help automate generation of static ``_build_widgets()`` methods.
 
 .. code-block:: python
+
   from guidoc import dump_layouts
   
   dump_layouts(globals()) # Dump all layouts available within the current module

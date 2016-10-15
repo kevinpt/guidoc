@@ -48,10 +48,6 @@ This gives rise to the following mockup:
   
 What happens here is the ``tk_layout`` decorator parses the Guidoc specification string and inserts the ``_build_widgets()`` method into the ``MyApp`` class. Calling the method in the initialization code adds all of the widget and menu items declared in the specification.
 
-.. note::
-
-  The examples in this documentation use Python 2.7 syntax. The "Tkinter" library was renamed to "tkinter" in Python 3.x.
-
   
 The ``guidoc.py`` file functions as a standalone module and can be directly copied into your projects. It also functions as a `command line tool for static code generation <https://kevinpt.github.io/guidoc/index.html#static-generation>`_.
 
