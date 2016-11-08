@@ -138,8 +138,7 @@ command if you have it available.</p>
 <p>The heart of using Guidoc is the layout specification. It is a string or separate file containing a description of the Tkinter GUI elements that will be generated.</p>
 <p>A specification is composed of a sequence of sections. Each section begins with a line in square brackets containing the section type and an optional parameter. Section type names are case insensitive.</p>
 <div class="figure align-center">
-<img alt="_images/guidoc_section.spec.png" src="_images/guidoc_section.spec.png" />
-<p class="caption">Widget section heading syntax</p>
+<img src="_images/syntax_section.svg" /><p class="caption">Widget section heading syntax</p>
 </div>
 <p>Sections can be in any order. There can be only one widgets section but any number of grid and menu sections are permitted. There is an implicit widgets section at the start of the specification so you can omit the &#8220;[widgets]&#8221; section heading and begin the widget definitions immediately.</p>
 <p>You can have comments anywhere within the specification. They are started by a &#8220;#&#8221; character and extend to the end of the line.</p>
@@ -147,8 +146,7 @@ command if you have it available.</p>
 <h3>Widgets section<a class="headerlink" href="#widgets-section" title="Permalink to this headline">¶</a></h3>
 <p>All of the widgets to be created in the layout are listed in the widgets section, one widget per line. An indented widget is the child of the parent widget at the previous indentation level. Tabs are not recognized as indentation, only spaces. Blank lines are ignored. They don&#8217;t affect the hierarchy. A widget specification consists of the following:</p>
 <div class="figure align-center">
-<img alt="_images/guidoc_widget.spec.png" src="_images/guidoc_widget.spec.png" />
-<p class="caption">Widget specification syntax</p>
+<img src="_images/syntax_widget.svg" /><p class="caption">Widget specification syntax</p>
 </div>
 <p>Every widget name becomes an instance attribute of the class that the layout will be inserted into. They must be a valid Python identifier. The class must be a visible Tkinter widget class or a custom class with a standard Tkinter <tt class="docutils literal"><span class="pre">config()</span></tt> method. The optional parameters are a list of Python keyword arguments that would be valid for the widget constructor or its <tt class="docutils literal"><span class="pre">config()</span></tt> method.</p>
 <p>All parameters must be a comma separated list in &#8220;&lt;key&gt;=&lt;value&gt;&#8221; format as positional parameters are not supported. Complex arguments requiring more than one line can be reserved for manual calls to the widget <tt class="docutils literal"><span class="pre">config()</span></tt> method after <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> has initialized the widgets.</p>
@@ -173,8 +171,7 @@ command if you have it available.</p>
 <p>The Guidoc package will attempt to discover the name of the Tkinter library and prepend it onto any standard widgets. In this case it has been aliased to &#8220;tk&#8221;. You can override this with an optional parameter to the <tt class="docutils literal"><span class="pre">tk_layout</span></tt> decorator.</p>
 <p>All widgets default to using the <tt class="docutils literal"><span class="pre">pack</span></tt> geometry manager. You can override the default by appending a geometry manager configuration to the end of the widget definition. This lets you pass configuration parameters or change to the <tt class="docutils literal"><span class="pre">grid</span></tt> or <tt class="docutils literal"><span class="pre">place</span></tt> managers if needed. It has the following syntax:</p>
 <div class="figure align-center">
-<img alt="_images/guidoc_widget_geometry.spec.png" src="_images/guidoc_widget_geometry.spec.png" />
-<p class="caption">Geometry manager configuration syntax</p>
+<img src="_images/syntax_widget_geometry.svg" /><p class="caption">Geometry manager configuration syntax</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -226,8 +223,7 @@ lblX lblY
 <h3>Menu sections<a class="headerlink" href="#menu-sections" title="Permalink to this headline">¶</a></h3>
 <p>Menus can be described in a hierarchical fashion similar to widgets. Each menu section describes a single menu tree. A row in the menu specification describes a single menu item with the following syntax:</p>
 <div class="figure align-center">
-<img alt="_images/guidoc_menu.spec.png" src="_images/guidoc_menu.spec.png" />
-<p class="caption">Menu item syntax</p>
+<img src="_images/syntax_menu.svg" /><p class="caption">Menu item syntax</p>
 </div>
 <p>The menu text must be quoted if it contains spaces. You can prefix a character with &#8220;&amp;&#8221; in the text to mark it as a keyboard accelerator. Check button menu items are preceded by &#8220;[]&#8221; and radio button items by &#8220;*&#8221;.</p>
 <p>The menu section parameter serves as the class attribute the menu will be assigned to. One menu section can have its parameter omitted, in which case it will be called &#8220;menubar&#8221;. An attempt will be made to automatically configure this menu as the application menu bar if the class or its parent is an instance of <tt class="docutils literal"><span class="pre">Toplevel</span></tt>. All other menus must be manually configured to become visible.</p>
@@ -315,6 +311,11 @@ self.RadioVal.set(&#39;1&#39;)  # Initialize the value
 </pre></div>
 </div>
 <p id="command-line-tool-for-static-code-generation">The original layout string is accessible through the <tt class="docutils literal"><span class="pre">_guidoc</span></tt> attribute of the class. The <tt class="docutils literal"><span class="pre">dump_layouts()</span></tt> convenience function will scan a namespace for any objects containing this attribute and write the value out to a file &#8220;&lt;object name&gt;.guidoc&#8221;. This can help automate generation of static <tt class="docutils literal"><span class="pre">_build_widgets()</span></tt> methods.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">guidoc</span> <span class="kn">import</span> <span class="n">dump_layouts</span>
+
+<span class="n">dump_layouts</span><span class="p">(</span><span class="nb">globals</span><span class="p">())</span> <span class="c"># Dump all layouts available within the current module</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="static-generation">
 <h2>Static generation<a class="headerlink" href="#static-generation" title="Permalink to this headline">¶</a></h2>
